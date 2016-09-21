@@ -18,3 +18,4 @@ println(res1.run(client).unsafePerformSync)
 
 ```
 
+See [https://github.com/dozed/pariprasna/blob/master/src/test/scala/pariprasna/OAuthExample.scala](https://github.com/dozed/pariprasna/blob/master/src/test/scala/pariprasna/OAuthExample.scala)
