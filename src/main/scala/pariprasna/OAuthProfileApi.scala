@@ -2,6 +2,7 @@ package pariprasna
 
 import io.circe._
 import org.http4s._
+import scalaz._, Scalaz._
 
 object OAuthProfileApi {
 
@@ -17,28 +18,66 @@ object OAuthProfileApi {
     gender: String
   )
 
+  implicit val userProfileEq = Equal.equalA[UserProfile]
+
+  // client.fetchAs[UserProfile](fetchUserProfile(.., ..))
+  def fetchUserProfile(endpointUri: Uri, accessToken: AccessToken): Request = {
+    Request(Method.GET, endpointUri).putHeaders(headers.Authorization(OAuth2BearerToken(accessToken.value)))
+  }
+
+
   def lookupProfileReader(s: String): Decoder[UserProfile] = s match {
     case "facebook" => readFacebookUser
-    case "google" =>  readGoogleUser
+    case "google" =>  openIdConnectUserDecoder
+    case "google+" =>  googlePlusUserDecoder
   }
 
   def lookupProfileApi(s: String): Uri = s match {
     case "facebook" => facebookProfileUri
     case "google" =>  googleProfileUri
+    case "google+" =>  googlePlusGetOpenIdConnectUri
   }
 
-  // Google: OpenID Connect (http://openid.net/connect/, https://accounts.google.com/.well-known/openid-configuration)
-  // Facebook: proprietary OAuth 2.0 authentication extension
-  val facebookProfileUri = Uri.uri("https://graph.facebook.com/me")
+
+  // Google: OpenID Connect
+  // https://accounts.google.com/.well-known/openid-configuration
   val googleProfileUri = Uri.uri("https://www.googleapis.com/oauth2/v3/userinfo")
 
+  // Google+ API user profile in OpenID Connect-like format
+  // https://developers.google.com/+/web/api/rest/openidconnect/getOpenIdConnect
+  val googlePlusGetOpenIdConnectUri = Uri.uri("https://www.googleapis.com/plus/v1/people/me/openIdConnect")
+
+  // Facebook: proprietary OAuth 2.0 authentication extension
+  val facebookProfileUri = Uri.uri("https://graph.facebook.com/me")
+
+
+
   // person's profile in OpenID Connect format
-  // https://developers.google.com/+/web/api/rest/openidconnect/getOpenIdConnect#request
-  val readGoogleUser = Decoder.instance[UserProfile] { cursor =>
+  // http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+  val openIdConnectUserDecoder = Decoder.instance[UserProfile] { cursor =>
     for {
       id <- cursor.downField("sub").as[String]
       email <- cursor.downField("email").as[String]
       verifiedEmail <- cursor.downField("email_verified").as[Boolean]
+      name <- cursor.downField("name").as[String]
+      givenName <- cursor.downField("given_name").as[String]
+      familyName <- cursor.downField("family_name").as[String]
+      link <- cursor.downField("profile").as[String]
+      picture <- cursor.downField("picture").as[String]
+      gender <- cursor.downField("gender").as[String]
+    } yield {
+      UserProfile(id, email, verifiedEmail, name, givenName, familyName, link, picture, gender)
+    }
+  }
+
+  // OpenID Connect-like
+  // email_verified is a string
+  val googlePlusUserDecoder = Decoder.instance[UserProfile] { cursor =>
+    for {
+      id <- cursor.downField("sub").as[String]
+      email <- cursor.downField("email").as[String]
+      verifiedEmailStr <- cursor.downField("email_verified").as[String]
+      verifiedEmail = if (verifiedEmailStr === "true") true else false
       name <- cursor.downField("name").as[String]
       givenName <- cursor.downField("given_name").as[String]
       familyName <- cursor.downField("family_name").as[String]
@@ -63,11 +102,6 @@ object OAuthProfileApi {
     } yield {
       UserProfile(id, email, verified, name, firstName, lastName, link, f"https://graph.facebook.com/v2.3/$id/picture", gender)
     }
-  }
-
-  // UserProfile
-  def fetchUserProfile(endpointUri: Uri, accessToken: AccessToken): Request = {
-    Request(Method.GET, endpointUri).putHeaders(headers.Authorization(OAuth2BearerToken(accessToken.value)))
   }
 
 }

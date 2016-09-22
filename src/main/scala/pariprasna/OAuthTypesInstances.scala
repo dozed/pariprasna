@@ -140,10 +140,12 @@ trait OAuthInstances extends OAuthTypes {
   }
 
   def circeDecoderAsEntityDecoder[A:Decoder]: EntityDecoder[A] = {
-    circeJsonEntityDecoder.flatMapR(json => Decoder[A].decodeJson(json).fold(
-      _ => org.http4s.DecodeResult.failure[A](MalformedMessageBodyFailure("bad request")),
-      a => org.http4s.DecodeResult.success[A](a)
-    ))
+    circeJsonEntityDecoder.flatMapR { json =>
+      Decoder[A].decodeJson(json).fold(
+        msg => org.http4s.DecodeResult.failure[A](MalformedMessageBodyFailure(msg.message)),
+        a => org.http4s.DecodeResult.success[A](a)
+      )
+    }
   }
 
   def circeJsonEntityDecoder: EntityDecoder[Json] =
@@ -151,7 +153,7 @@ trait OAuthInstances extends OAuthTypes {
       EntityDecoder.collectBinary(msg).map(bs => new String(bs.toArray, msg.charset.getOrElse(Charset.`UTF-8`).nioCharset)).flatMap { txt =>
         io.circe.parser.parse(txt).fold(
           _ => org.http4s.DecodeResult.failure[Json](MalformedMessageBodyFailure("bad request")),
-          a => org.http4s.DecodeResult.success[Json](a)
+          json => org.http4s.DecodeResult.success[Json](json)
         )
       }
     }
