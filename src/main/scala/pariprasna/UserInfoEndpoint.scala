@@ -6,32 +6,6 @@ import scalaz._, Scalaz._
 
 object UserInfoEndpoint {
 
-  case class UserInfo(
-    id: String,
-    email: String,
-    verifiedEmail: Boolean,
-    name: String,
-    givenName: String,
-    familyName: String,
-    profile: String,
-    picture: String,
-    gender: String
-  )
-
-  // Google doesn't always send gender and profile
-  case class BasicUserInfo(
-    id: String,
-    email: String,
-    verifiedEmail: Boolean,
-    name: String,
-    givenName: String,
-    familyName: String,
-    picture: String
-  )
-
-  implicit val userInfoEq = Equal.equalA[UserInfo]
-  implicit val userInfoShow = Show.showA[UserInfo]
-
   sealed trait UserInfoClaim
 
   object UserInfoClaim {
@@ -60,6 +34,36 @@ object UserInfoEndpoint {
     case class Custom(key: String, value: Json) extends UserInfoClaim
 
   }
+
+
+  // all fields, but "sub" are optional
+
+  // TODO use claims
+  case class UserInfo(
+    sub: String,
+    email: String,
+    verifiedEmail: Boolean,
+    name: String,
+    givenName: String,
+    familyName: String,
+    profile: String,
+    picture: String,
+    gender: String
+  )
+
+  case class BasicUserInfo(
+    sub: String,
+    email: String,
+    verifiedEmail: Boolean,
+    name: String,
+    givenName: String,
+    familyName: String,
+    picture: String
+  )
+
+  implicit val userInfoEq = Equal.equalA[UserInfo]
+  implicit val userInfoShow = Show.showA[UserInfo]
+
 
   val strBooleanDecoder: Decoder[Boolean] = Decoder[String].map(str => if (str === "true") true else false)
 
@@ -139,7 +143,7 @@ object UserInfoEndpoint {
   // http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
   val openIdConnectUserInfoDecoder = Decoder.instance[UserInfo] { cursor =>
     for {
-      id <- cursor.downField("sub").as[String]
+      sub <- cursor.downField("sub").as[String]
       email <- cursor.downField("email").as[String]
       verifiedEmail <- cursor.downField("email_verified").as[Boolean]
       name <- cursor.downField("name").as[String]
@@ -149,7 +153,7 @@ object UserInfoEndpoint {
       picture <- cursor.downField("picture").as[String]
       gender <- cursor.downField("gender").as[String]
     } yield {
-      UserInfo(id, email, verifiedEmail, name, givenName, familyName, profile, picture, gender)
+      UserInfo(sub, email, verifiedEmail, name, givenName, familyName, profile, picture, gender)
     }
   }
 
@@ -157,7 +161,7 @@ object UserInfoEndpoint {
   // email_verified is a string
   val googlePlusUserInfoDecoder = Decoder.instance[UserInfo] { cursor =>
     for {
-      id <- cursor.downField("sub").as[String]
+      sub <- cursor.downField("sub").as[String]
       email <- cursor.downField("email").as[String]
       verifiedEmail <- {
         cursor.downField("email_verified").as[String].map(str => if (str === "true") true else false)
@@ -170,7 +174,7 @@ object UserInfoEndpoint {
       picture <- cursor.downField("picture").as[String]
       gender <- cursor.downField("gender").as[String]
     } yield {
-      UserInfo(id, email, verifiedEmail, name, givenName, familyName, profile, picture, gender)
+      UserInfo(sub, email, verifiedEmail, name, givenName, familyName, profile, picture, gender)
     }
   }
 
