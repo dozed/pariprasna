@@ -11,8 +11,8 @@ object OAuthClient {
   def req[A](f: Client => Task[A]): Kleisli[Task, Client, A] = Kleisli(f)
 
 
-  def startAuthorizationRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String) = req[AuthorizationRequestRedirect] { client =>
-    client.fetch[AuthorizationRequestRedirect](OAuthRequests.authorizationRequest(endpoint, credentials, redirectUri, state)) {
+  def startAuthorization(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String) = req[AuthorizationRequestRedirect] { client =>
+    client.fetch[AuthorizationRequestRedirect](Requests.authorizationRequest(endpoint, credentials, redirectUri, state)) {
       res =>
         res.headers.get(headers.Location).cata(
           loc => Task.now(AuthorizationRequestRedirect(loc.uri)),
@@ -22,7 +22,7 @@ object OAuthClient {
   }
 
   // TODO automate
-  def finishAuthorizationRequest(redirect: AuthorizationRequestRedirect) = req[AuthorizationResponse] { client =>
+  def finishAuthorization(redirect: AuthorizationRequestRedirect) = req[AuthorizationResponse] { client =>
 
     println("Visit browser:")
     println(redirect.uri.toString)
@@ -30,12 +30,23 @@ object OAuthClient {
     println("Enter redirect uri:")
     Uri.fromString(scala.io.StdIn.readLine.trim).fold(
       _ => Task.fail(OAuthError.ParseError("redirect uri")),
-      uri => readAuthorizationResponse(uri).run(client)
+      uri => readAuthorizationResponseUri(uri)
     )
 
   }
 
-  def readAuthorizationResponse(uri: Uri) = req[AuthorizationResponse] { client =>
+  def exchangeCodeForToken(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, code: AuthorizationCode) = req[TokenResponse] { client =>
+    client.fetchAs[TokenResponse](Requests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code, redirectUri))
+  }
+
+  def fetchUserProfile(providerKey: String, accessToken: AccessToken) = req[UserInfoEndpoint.UserInfo] { client =>
+    val apiEndpointUri = UserInfoEndpoint.lookupUserInfoEndpoint(providerKey)
+    val reader = UserInfoEndpoint.lookupUserInfoDecoder(providerKey)
+    client.fetchAs[UserInfoEndpoint.UserInfo](UserInfoEndpoint.fetchUserInfo(apiEndpointUri, accessToken))(Util.circeDecoderAsEntityDecoder(reader))
+  }
+
+
+  def readAuthorizationResponseUri(uri: Uri): Task[AuthorizationResponse] = {
 
     // success case
     // https://www.example.org/oauth2callback?
@@ -56,16 +67,6 @@ object OAuthClient {
         Task.fail(OAuthError.AuthRequestCodeMissing)
       )
     )
-  }
-
-  def exchangeCodeForAccessToken(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, code: AuthorizationCode) = req[TokenResponse] { client =>
-    client.fetchAs[TokenResponse](OAuthRequests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code, redirectUri))(tokenResponseEntityDecoder)
-  }
-
-  def fetchUserProfile(providerKey: String, accessToken: AccessToken) = req[OAuthProfileApi.UserProfile] { client =>
-    val apiEndpointUri = OAuthProfileApi.lookupProfileApi(providerKey)
-    val reader = OAuthProfileApi.lookupProfileReader(providerKey)
-    client.fetchAs[OAuthProfileApi.UserProfile](OAuthProfileApi.fetchUserProfile(apiEndpointUri, accessToken))(circeDecoderAsEntityDecoder(reader))
   }
 
 

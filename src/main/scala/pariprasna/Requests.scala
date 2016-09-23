@@ -6,7 +6,7 @@ import org.http4s.client.Client
 import scalaz.concurrent._
 import scalaz._, Scalaz._
 
-object OAuthRequests {
+object Requests {
 
   def authorizationRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String): Request = {
 
