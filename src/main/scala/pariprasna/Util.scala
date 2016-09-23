@@ -1,17 +1,12 @@
 package pariprasna
 
-import iaksmlka._
 import io.circe._
 import org.http4s._
-import pariprasna.OAuthError.TokenResponseError
 
-import scalaz._
-import Scalaz._
-import scalaz.concurrent.Task
+import scalaz._, Scalaz._
+import scalaz.concurrent._
 
 object Util {
-
-  // entity decoder
 
   def circeDecoderAsEntityDecoder[A:Decoder]: EntityDecoder[A] = {
     circeJsonEntityDecoder.flatMapR { json =>

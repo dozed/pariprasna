@@ -6,8 +6,7 @@ import UserInfoEndpoint._
 
 import io.circe.parser.parse
 
-import scalaz._
-import Scalaz._
+import scalaz._, Scalaz._
 
 class UserInfoSpecs extends Specification {
 

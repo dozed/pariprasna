@@ -4,11 +4,8 @@ import iaksmlka._
 import io.circe._
 import org.http4s._
 
-import scalaz._
-import Scalaz._
+import scalaz._, Scalaz._
 import scalaz.concurrent.Task
-
-import Util._
 
 case class OAuthCredentials(
   clientId: String,
@@ -63,10 +60,6 @@ case class TokenResponse(
 )
 
 object TokenResponse {
-
-
-  type StringDecoder = String => DecodeResult[TokenResponse]
-
 
   val tokenResponseJsonDecoder: Decoder[TokenResponse] = Decoder.instance[TokenResponse] { json =>
 
