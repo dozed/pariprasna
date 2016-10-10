@@ -19,5 +19,5 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1")
 
 lazy val iaksmlka = ProjectRef(uri("https://github.com/dozed/iaksmlka.git"), "iaksmlka")
 
-lazy val root = project.in(file("."))
+lazy val pariprasna = project.in(file("."))
   .dependsOn(iaksmlka)
