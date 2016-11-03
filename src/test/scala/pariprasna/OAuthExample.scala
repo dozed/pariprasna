@@ -16,7 +16,7 @@ object OAuthExample extends App  {
   val res1 = for {
     authorizationRequestRedirect <- OAuthClient.startAuthorization(OAuthEndpoints.google, OAuthEndpoints.googleCreds, redirectUri, "")
     authorizationResponse <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
-    tokenResponse <- OAuthClient.exchangeCodeForToken(OAuthEndpoints.google, OAuthEndpoints.googleCreds, redirectUri, authorizationResponse.code)
+    tokenResponse <- OAuthClient.exchangeCodeForToken(OAuthEndpoints.google, OAuthEndpoints.googleCreds, authorizationResponse.code)
     user <- OAuthClient.fetchUserProfile(OAuthEndpoints.google.key, tokenResponse.accessToken)
     user2 <- OAuthClient.fetchUserProfile("google+", tokenResponse.accessToken)
   } yield (user, user2, user === user2)
@@ -26,7 +26,7 @@ object OAuthExample extends App  {
   val res2 = for {
     authorizationRequestRedirect <- OAuthClient.startAuthorization(OAuthEndpoints.fb, OAuthEndpoints.fbCreds, redirectUri, "")
     authorizationResponse <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
-    tokenResponse <- OAuthClient.exchangeCodeForToken(OAuthEndpoints.fb, OAuthEndpoints.fbCreds, redirectUri, authorizationResponse.code)
+    tokenResponse <- OAuthClient.exchangeCodeForToken(OAuthEndpoints.fb, OAuthEndpoints.fbCreds, authorizationResponse.code)
     user <- OAuthClient.fetchUserProfile(OAuthEndpoints.fb.key, tokenResponse.accessToken)
   } yield user
 

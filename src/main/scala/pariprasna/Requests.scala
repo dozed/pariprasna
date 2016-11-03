@@ -22,13 +22,12 @@ object Requests {
   }
 
   // .as[TokenResponse]
-  def exchangeCodeForAccessTokenRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode, redirectUri: Uri): Request = {
+  def exchangeCodeForAccessTokenRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode): Request = {
 
     val form = UrlForm(
       OAuthAttribute.Code.name -> code.value,
       OAuthAttribute.ClientId.name -> credentials.clientId,
       OAuthAttribute.ClientSecret.name -> credentials.clientSecret,
-      OAuthAttribute.RedirectUri.name -> redirectUri.toString,
       OAuthAttribute.GrantType.name -> "authorization_code"
     )
 
