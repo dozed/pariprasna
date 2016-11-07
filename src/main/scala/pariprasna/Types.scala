@@ -4,11 +4,9 @@ import iaksmlka._
 import io.circe._
 import io.circe.parser
 import org.http4s._
-import org.http4s.client.Client
 
 import scalaz._
 import Scalaz._
-import scalaz.concurrent.Task
 
 case class OAuthCredentials(
   clientId: String,
@@ -33,7 +31,6 @@ object OAuthCredentials {
 }
 
 case class OAuthEndpoint(
-  key: String,
   scopes: List[String],
   authorizationUri: Uri,
   tokenUri: Uri

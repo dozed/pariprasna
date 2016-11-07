@@ -39,7 +39,7 @@ object OAuthClient {
     client.fetchAs[TokenResponse](Requests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code, redirectUri))
   }
 
-  def fetchUserProfile(providerKey: String, accessToken: AccessToken) = req[UserInfoEndpoint.UserInfo] { client =>
+  def fetchUserInfo(providerKey: String, accessToken: AccessToken) = req[UserInfoEndpoint.UserInfo] { client =>
     val apiEndpointUri = UserInfoEndpoint.lookupUserInfoEndpoint(providerKey)
     val reader = UserInfoEndpoint.lookupUserInfoDecoder(providerKey)
     client.fetchAs[UserInfoEndpoint.UserInfo](UserInfoEndpoint.fetchUserInfo(apiEndpointUri, accessToken))(Util.circeDecoderAsEntityDecoder(reader))

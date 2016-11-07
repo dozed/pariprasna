@@ -14,8 +14,8 @@ object OAuthExample extends App  {
 
   val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
   val endpoints = Map(
-    "facebook" -> OAuthEndpoint("facebook", List("email", "public_profile"), Uri.uri("https://www.facebook.com/dialog/oauth"), Uri.uri("https://graph.facebook.com/oauth/access_token")),
-    "google" -> OAuthEndpoint("google", List("openid", "email", "profile"), Uri.uri("https://accounts.google.com/o/oauth2/v2/auth"), Uri.uri("https://www.googleapis.com/oauth2/v4/token"))
+    "facebook" -> OAuthEndpoint(List("email", "public_profile"), Uri.uri("https://www.facebook.com/dialog/oauth"), Uri.uri("https://graph.facebook.com/oauth/access_token")),
+    "google" -> OAuthEndpoint(List("openid", "email", "profile"), Uri.uri("https://accounts.google.com/o/oauth2/v2/auth"), Uri.uri("https://www.googleapis.com/oauth2/v4/token"))
   )
 
   val redirectUri = Uri.uri("http://localhost/oauth/callback")
@@ -28,11 +28,11 @@ object OAuthExample extends App  {
       authorizationRequestRedirect <- OAuthClient.startAuthorization(endpoint, credentials, redirectUri, "")
       authorizationResponse <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
       tokenResponse <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
-      user <- OAuthClient.fetchUserProfile(provider, tokenResponse.accessToken)
+      user <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken)
     } yield user
   }
 
-  println(showUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
+  // println(showUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
   println(showUserInfo("facebook", creds, endpoints).run(client).unsafePerformSyncAttempt)
 
 
