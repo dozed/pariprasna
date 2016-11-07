@@ -35,8 +35,8 @@ object OAuthClient {
 
   }
 
-  def exchangeCodeForToken(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode) = req[TokenResponse] { client =>
-    client.fetchAs[TokenResponse](Requests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code))
+  def exchangeCodeForToken(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode, redirectUri: Uri) = req[TokenResponse] { client =>
+    client.fetchAs[TokenResponse](Requests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code, redirectUri))
   }
 
   def fetchUserProfile(providerKey: String, accessToken: AccessToken) = req[UserInfoEndpoint.UserInfo] { client =>

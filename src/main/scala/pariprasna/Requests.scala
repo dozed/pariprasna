@@ -22,13 +22,14 @@ object Requests {
   }
 
   // .as[TokenResponse]
-  def exchangeCodeForAccessTokenRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode): Request = {
+  def exchangeCodeForAccessTokenRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode, redirectUri: Uri): Request = {
 
     val form = UrlForm(
       OAuthAttribute.Code.name -> code.value,
       OAuthAttribute.ClientId.name -> credentials.clientId,
       OAuthAttribute.ClientSecret.name -> credentials.clientSecret,
-      OAuthAttribute.GrantType.name -> "authorization_code"
+      OAuthAttribute.GrantType.name -> "authorization_code",
+      OAuthAttribute.RedirectUri.name -> redirectUri.toString
     )
 
     Request(Method.POST, endpoint.tokenUri).withBody(form).unsafePerformSync

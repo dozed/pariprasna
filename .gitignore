@@ -2,3 +2,4 @@
 target
 project/target
 project/project
+src/test/resources/credentials.json

@@ -2,14 +2,35 @@ package pariprasna
 
 import iaksmlka._
 import io.circe._
+import io.circe.parser
 import org.http4s._
+import org.http4s.client.Client
 
-import scalaz._, Scalaz._
+import scalaz._
+import Scalaz._
 import scalaz.concurrent.Task
 
 case class OAuthCredentials(
   clientId: String,
-  clientSecret: String)
+  clientSecret: String
+)
+
+
+object OAuthCredentials {
+
+  implicit val oauthCredentialDecoder = Decoder.forProduct2[String, String, OAuthCredentials]("clientId", "clientSecret")(OAuthCredentials.apply)
+
+  def fromFile(file: String): Map[String, OAuthCredentials] = {
+    val text = {
+      val source = scala.io.Source.fromFile(file)
+      val text = source.mkString
+      source.close
+      text
+    }
+    parser.parse(text).flatMap(_.as[Map[String, OAuthCredentials]]).getOrElse(Map.empty)
+  }
+
+}
 
 case class OAuthEndpoint(
   key: String,
