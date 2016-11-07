@@ -23,12 +23,12 @@ object OAuthExample extends App  {
 
   def showUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]) = {
     for {
-      credentials <- OAuthClient.req(_ => credentialsStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown credentials $provider"))))
-      endpoint <- OAuthClient.req(_ => endpointStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown endpoint $provider"))))
+      credentials                  <- OAuthClient.req(_ => credentialsStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown credentials $provider"))))
+      endpoint                     <- OAuthClient.req(_ => endpointStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown endpoint $provider"))))
       authorizationRequestRedirect <- OAuthClient.startAuthorization(endpoint, credentials, redirectUri, "")
-      authorizationResponse <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
-      tokenResponse <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
-      user <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken)
+      authorizationResponse        <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
+      tokenResponse                <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
+      user                         <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken)
     } yield user
   }
 
