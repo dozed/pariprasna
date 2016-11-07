@@ -12,9 +12,9 @@ object Requests {
 
     val uri = endpoint.authorizationUri
       .withQueryParam(OAuthAttribute.ClientId.name, credentials.clientId)
+      .withQueryParam(OAuthAttribute.RedirectUri.name, redirectUri.toString)
       .withQueryParam(OAuthAttribute.ResponseType.name, "code")
       .withQueryParam(OAuthAttribute.Scope.name, endpoint.scopes.mkString(" "))
-      .withQueryParam(OAuthAttribute.RedirectUri.name, redirectUri.toString)
       .withQueryParam(OAuthAttribute.State.name, state)
 
     Request(Method.GET, uri)
@@ -25,11 +25,11 @@ object Requests {
   def exchangeCodeForAccessTokenRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, code: AuthorizationCode, redirectUri: Uri): Request = {
 
     val form = UrlForm(
-      OAuthAttribute.Code.name -> code.value,
       OAuthAttribute.ClientId.name -> credentials.clientId,
       OAuthAttribute.ClientSecret.name -> credentials.clientSecret,
-      OAuthAttribute.GrantType.name -> "authorization_code",
-      OAuthAttribute.RedirectUri.name -> redirectUri.toString
+      OAuthAttribute.RedirectUri.name -> redirectUri.toString,
+      OAuthAttribute.Code.name -> code.value,
+      OAuthAttribute.GrantType.name -> "authorization_code"
     )
 
     Request(Method.POST, endpoint.tokenUri).withBody(form).unsafePerformSync

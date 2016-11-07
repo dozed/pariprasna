@@ -61,7 +61,7 @@ object OAuthClient {
     // https://www.example.org/oauth2callback?error=access_denied&state=security_token%3D...%26action%3Dlogin
 
     uri.params.get(OAuthAttribute.Error.name).cata(
-      error => Task.fail(OAuthError.AuthorizationError(error, uri.params.get(OAuthAttribute.Description.name))),
+      error => Task.fail(OAuthError.AuthorizationError(error, uri.params.get(OAuthAttribute.Description.name).orElse(uri.params.get(OAuthAttribute.ErrorDescription.name)))),
       uri.params.get(OAuthAttribute.Code.name).cata(
         code => Task.now(AuthorizationResponse(AuthorizationCode(code), uri.params.get(OAuthAttribute.State.name))),
         Task.fail(OAuthError.AuthRequestCodeMissing)

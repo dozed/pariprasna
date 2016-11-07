@@ -48,6 +48,7 @@ object OAuthAttribute {
   val Scope = AttributeKey[String]("scope")
   val Error = AttributeKey[String]("error")
   val Description = AttributeKey[String]("description")
+  val ErrorDescription = AttributeKey[String]("error_description")
   val State = AttributeKey[String]("state")
 
 }
