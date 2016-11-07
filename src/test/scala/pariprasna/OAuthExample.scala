@@ -14,22 +14,7 @@ object OAuthExample extends App  {
 
   val client = org.http4s.client.blaze.defaultClient
 
-  // val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
-
-  val creds = OAuthCredentials.fromText(
-    """
-      |{
-      |  "facebook": {
-      |    "clientId": "...",
-      |    "clientSecret": "..."
-      |  },
-      |  "google": {
-      |    "clientId": "...",
-      |    "clientSecret": "..."
-      |  }
-      |}
-    """.stripMargin
-  )
+  val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
 
   val endpoints = Map(
     "facebook" -> OAuthEndpoint("facebook", List("email", "public_profile"), Uri.uri("https://www.facebook.com/v2.8/dialog/oauth"), Uri.uri("https://graph.facebook.com/v2.8/oauth/access_token")),

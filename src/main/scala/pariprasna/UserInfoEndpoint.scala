@@ -23,7 +23,8 @@ object UserInfoEndpoint {
   val googlePlusGetOpenIdConnectUri = Uri.uri("https://www.googleapis.com/plus/v1/people/me/openIdConnect")
 
   // Facebook: proprietary OAuth 2.0 authentication extension
-  val facebookUserInfoUri = Uri.uri("https://graph.facebook.com/v2.8/me")
+  // https://developers.facebook.com/docs/graph-api/reference/user
+  val facebookUserInfoUri = Uri.uri("https://graph.facebook.com/v2.8/me?fields=id,email,name")
 
 
 
@@ -285,7 +286,7 @@ object UserInfoEndpoint {
       link <- json.downField("link").as[String]
       gender <- json.downField("gender").as[String]
     } yield {
-      UserInfo(id, email, verified, name, firstName, lastName, link, f"https://graph.facebook.com/v2.8/$id/picture", gender)
+      UserInfo(id, email, verified, name, firstName, lastName, link, s"https://graph.facebook.com/v2.8/$id/picture", gender)
     }
   }
 
@@ -298,7 +299,7 @@ object UserInfoEndpoint {
       firstName <- json.downField("first_name").as[String]
       lastName <- json.downField("last_name").as[String]
     } yield {
-      BasicUserInfo(id, email, verified, name, firstName, lastName, f"https://graph.facebook.com/v2.8/$id/picture")
+      BasicUserInfo(id, email, verified, name, firstName, lastName, s"https://graph.facebook.com/v2.8/$id/picture")
     }
   }
 
