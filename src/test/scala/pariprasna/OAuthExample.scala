@@ -11,7 +11,6 @@ import scalaz.concurrent._
 
 object OAuthExample extends App  {
 
-
   val client = org.http4s.client.blaze.defaultClient
 
   val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
@@ -24,7 +23,7 @@ object OAuthExample extends App  {
   val redirectUri = Uri.uri("http://localhost/oauth/callback")
 
 
-  def showUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]): ReaderT[Task, Client, (List[UserInfoClaim], String)] = {
+  def fetchUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]): ReaderT[Task, Client, List[UserInfoClaim]] = {
     for {
       credentials                  <- OAuthClient.req(_ => credentialsStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown credentials $provider"))))
       endpoint                     <- OAuthClient.req(_ => endpointStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown endpoint $provider"))))
@@ -32,11 +31,11 @@ object OAuthExample extends App  {
       authorizationResponse        <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
       tokenResponse                <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
       claims                       <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken, UserInfoEndpoint.nonStandardUserInfoClaimDecoder)
-    } yield (claims, UserInfoEndpoint.userInfoClaimEncoder(claims).spaces2)
+    } yield claims
   }
 
-  println(showUserInfo("facebook", creds, endpoints).run(client).unsafePerformSyncAttempt)
-  println(showUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
+  println(fetchUserInfo("facebook", creds, endpoints).run(client).unsafePerformSyncAttempt)
+  println(fetchUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
 
 
 

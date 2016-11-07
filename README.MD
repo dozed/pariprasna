@@ -2,19 +2,42 @@
 
 
 ```scala
+val creds = OAuthCredentials.fromText(
+    """
+      |{
+      |  "facebook": {
+      |    "clientId": "...",
+      |    "clientSecret": "..."
+      |  },
+      |  "google": {
+      |    "clientId": "...",
+      |    "clientSecret": "..."
+      |  }
+      |}
+    """.stripMargin
+  )
+
+val endpoints = Map(
+  "facebook" -> OAuthEndpoint("facebook", List("email", "public_profile"), Uri.uri("https://www.facebook.com/v2.8/dialog/oauth"), Uri.uri("https://graph.facebook.com/v2.8/oauth/access_token")),
+  "google" -> OAuthEndpoint("google", List("openid", "email", "profile"), Uri.uri("https://accounts.google.com/o/oauth2/v2/auth"), Uri.uri("https://www.googleapis.com/oauth2/v4/token"))
+)
 
 val redirectUri = Uri.uri("http://localhost/oauth/callback")
 
 val client = org.http4s.client.blaze.defaultClient
 
-val res1 = for {
-  authorizationRequestRedirect <- OAuthClient.startAuthorizationRequest(OAuthEndpoints.google, OAuthEndpoints.googleCreds, redirectUri, "")
-  authorizationResponse <- OAuthClient.finishAuthorizationRequest(authorizationRequestRedirect)
-  tokenResponse <- OAuthClient.exchangeCodeForAccessToken(OAuthEndpoints.google, OAuthEndpoints.googleCreds, redirectUri, authorizationResponse.code)
-  user <- OAuthClient.fetchUserProfile(OAuthEndpoints.google.key, tokenResponse.accessToken)
-} yield user
+def fetchUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]): Kleisli[Task, Client, List[UserInfoClaim]] = {
+  for {
+    credentials                  <- OAuthClient.req(_ => credentialsStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown credentials $provider"))))
+    endpoint                     <- OAuthClient.req(_ => endpointStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown endpoint $provider"))))
+    authorizationRequestRedirect <- OAuthClient.startAuthorization(endpoint, credentials, redirectUri, "")
+    authorizationResponse        <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
+    tokenResponse                <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
+    claims                       <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken, UserInfoEndpoint.nonStandardUserInfoClaimDecoder)
+  } yield claims
+}
 
-println(res1.run(client).unsafePerformSync)
+println(fetchUserInfo("google", creds, endpoints).run(client).unsafePerformSync)
 
 ```
 
