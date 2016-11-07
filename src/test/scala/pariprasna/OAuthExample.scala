@@ -1,6 +1,8 @@
 package pariprasna
 
 import org.http4s._
+import org.http4s.client.Client
+import pariprasna.UserInfoEndpoint.UserInfoClaim
 
 import scalaz._
 import Scalaz._
@@ -12,29 +14,44 @@ object OAuthExample extends App  {
 
   val client = org.http4s.client.blaze.defaultClient
 
-  val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
+  // val creds = OAuthCredentials.fromFile("src/test/resources/credentials.json")
+
+  val creds = OAuthCredentials.fromText(
+    """
+      |{
+      |  "facebook": {
+      |    "clientId": "...",
+      |    "clientSecret": "..."
+      |  },
+      |  "google": {
+      |    "clientId": "...",
+      |    "clientSecret": "..."
+      |  }
+      |}
+    """.stripMargin
+  )
+
   val endpoints = Map(
-    "facebook" -> OAuthEndpoint(List("email", "public_profile"), Uri.uri("https://www.facebook.com/v2.8/dialog/oauth"), Uri.uri("https://graph.facebook.com/v2.8/oauth/access_token")),
-    "google" -> OAuthEndpoint(List("openid", "email", "profile"), Uri.uri("https://accounts.google.com/o/oauth2/v2/auth"), Uri.uri("https://www.googleapis.com/oauth2/v4/token"))
+    "facebook" -> OAuthEndpoint("facebook", List("email", "public_profile"), Uri.uri("https://www.facebook.com/v2.8/dialog/oauth"), Uri.uri("https://graph.facebook.com/v2.8/oauth/access_token")),
+    "google" -> OAuthEndpoint("google", List("openid", "email", "profile"), Uri.uri("https://accounts.google.com/o/oauth2/v2/auth"), Uri.uri("https://www.googleapis.com/oauth2/v4/token"))
   )
 
   val redirectUri = Uri.uri("http://localhost/oauth/callback")
 
 
-  def showUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]) = {
+  def showUserInfo(provider: String, credentialsStore: Map[String, OAuthCredentials], endpointStore: Map[String, OAuthEndpoint]): ReaderT[Task, Client, (List[UserInfoClaim], String)] = {
     for {
       credentials                  <- OAuthClient.req(_ => credentialsStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown credentials $provider"))))
       endpoint                     <- OAuthClient.req(_ => endpointStore.get(provider).cata(Task.now, Task.fail(new RuntimeException(s"unknown endpoint $provider"))))
       authorizationRequestRedirect <- OAuthClient.startAuthorization(endpoint, credentials, redirectUri, "")
       authorizationResponse        <- OAuthClient.finishAuthorization(authorizationRequestRedirect)
       tokenResponse                <- OAuthClient.exchangeCodeForToken(endpoint, credentials, authorizationResponse.code, redirectUri)
-      user                         <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken)
-    } yield user
+      claims                       <- OAuthClient.fetchUserInfo(provider, tokenResponse.accessToken, UserInfoEndpoint.nonStandardUserInfoClaimDecoder)
+    } yield (claims, UserInfoEndpoint.userInfoClaimEncoder(claims).spaces2)
   }
 
-  // println(showUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
   println(showUserInfo("facebook", creds, endpoints).run(client).unsafePerformSyncAttempt)
-
+  println(showUserInfo("google", creds, endpoints).run(client).unsafePerformSyncAttempt)
 
 
 

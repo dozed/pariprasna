@@ -19,18 +19,22 @@ object OAuthCredentials {
   implicit val oauthCredentialDecoder = Decoder.forProduct2[String, String, OAuthCredentials]("clientId", "clientSecret")(OAuthCredentials.apply)
 
   def fromFile(file: String): Map[String, OAuthCredentials] = {
-    val text = {
+    fromText {
       val source = scala.io.Source.fromFile(file)
       val text = source.mkString
       source.close
       text
     }
+  }
+
+  def fromText(text: String): Map[String, OAuthCredentials] = {
     parser.parse(text).flatMap(_.as[Map[String, OAuthCredentials]]).getOrElse(Map.empty)
   }
 
 }
 
 case class OAuthEndpoint(
+  key: String,
   scopes: List[String],
   authorizationUri: Uri,
   tokenUri: Uri
@@ -106,7 +110,7 @@ object TokenResponse {
       tokenResponseJsonEntityDecoder.decode(msg, false).orElse(tokenResponseFormEntityDecoder.decode(msg, false))
     }
 
-  def tokenResponseJsonEntityDecoder: EntityDecoder[TokenResponse] = Util.circeJsonEntityDecoder.flatMapR {
+  def tokenResponseJsonEntityDecoder: EntityDecoder[TokenResponse] = org.http4s.circe.json.flatMapR {
     json =>
       tokenResponseJsonDecoder.decodeJson(json).fold(
         failure => {

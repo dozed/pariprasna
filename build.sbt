@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser" % "0.4.1",
   "org.http4s" %% "http4s-servlet" % "0.13.2a",
   "org.http4s" %% "http4s-blaze-client" % "0.13.2a",
+  "org.http4s" %% "http4s-circe" % "0.13.2a",
   "org.specs2" %% "specs2-core" % "3.7.2" % "test",
   "org.typelevel" %% "scalaz-specs2" % "0.4.0" % "test"
 )

@@ -102,6 +102,79 @@ object UserInfoEndpoint {
       }
     }
 
+  implicit val nonStandardUserInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
+      Decoder.instance[List[UserInfoClaim]] { json =>
+
+        import cats.std.list._
+        import cats.syntax.traverse._
+
+        val xs: List[Decoder.Result[UserInfoClaim]] = obj.toList.map {
+          case ("sub", x) => x.as[String] map UserInfoClaim.Sub
+          case ("name", x) => x.as[String] map UserInfoClaim.Name
+          case ("given_name", x) => x.as[String] map UserInfoClaim.GivenName
+          case ("family_name", x) => x.as[String] map UserInfoClaim.FamilyName
+          case ("middle_name", x) => x.as[String] map UserInfoClaim.MiddleName
+          case ("nickname", x) => x.as[String] map UserInfoClaim.Nickname
+          case ("preferred_username", x) => x.as[String] map UserInfoClaim.PreferredUsername
+          case ("profile", x) => x.as[String] map UserInfoClaim.Profile
+          case ("picture", x) => x.as[String] map UserInfoClaim.Picture
+          case ("website", x) => x.as[String] map UserInfoClaim.Website
+          case ("email", x) => x.as[String] map UserInfoClaim.Email
+          case ("email_verified", x) => x.as[Boolean](Decoder[Boolean].or(strBooleanDecoder)) map UserInfoClaim.EmailVerified
+          case ("gender", x) => x.as[String] map UserInfoClaim.Gender
+          case ("birthdate", x) => x.as[String] map UserInfoClaim.Birthdate
+          case ("locale", x) => x.as[String] map UserInfoClaim.Locale
+          case ("phone_number", x) => x.as[String] map UserInfoClaim.PhoneNumber
+          case ("phone_number_verified", x) => x.as[Boolean](Decoder[Boolean].or(strBooleanDecoder)) map UserInfoClaim.PhoneNumberVerified
+          case ("address", x) => cats.data.Xor.Right(UserInfoClaim.Address(x))
+          case ("updated_at", x) => x.as[Long] map UserInfoClaim.UpdatedAt
+
+          // facebook
+          case ("id", x) => x.as[String] map UserInfoClaim.Sub
+          case ("first_name", x) => x.as[String] map UserInfoClaim.GivenName
+          case ("last_name", x) => x.as[String] map UserInfoClaim.FamilyName
+          case ("link", x) => x.as[String] map UserInfoClaim.Profile
+          case ("timezone", x) => x.as[Int] map (x => UserInfoClaim.Zoneinfo(x.toString))
+          case ("verified", x) => x.as[Boolean](Decoder[Boolean].or(strBooleanDecoder)) map UserInfoClaim.EmailVerified
+
+          // custom
+          case (key, x) => cats.data.Xor.Right(UserInfoClaim.Custom(key, x))
+        }
+
+        xs.sequence
+
+      }
+    }
+
+  implicit val userInfoClaimEncoder: Encoder[List[UserInfoClaim]] = Encoder.instance[List[UserInfoClaim]] { xs =>
+
+    val xs1: List[(String, Json)] = xs.map {
+      case UserInfoClaim.Sub(x) => ("sub", Json.fromString(x))
+      case UserInfoClaim.Name(x) => ("name", Json.fromString(x))
+      case UserInfoClaim.GivenName(x) => ("given_name", Json.fromString(x))
+      case UserInfoClaim.FamilyName(x) => ("family_name", Json.fromString(x))
+      case UserInfoClaim.MiddleName(x) => ("middle_name", Json.fromString(x))
+      case UserInfoClaim.Nickname(x) => ("nickname", Json.fromString(x))
+      case UserInfoClaim.PreferredUsername(x) => ("preferred_username", Json.fromString(x))
+      case UserInfoClaim.Profile(x) => ("profile", Json.fromString(x))
+      case UserInfoClaim.Picture(x) => ("picture", Json.fromString(x))
+      case UserInfoClaim.Website(x) => ("website", Json.fromString(x))
+      case UserInfoClaim.Email(x) => ("email", Json.fromString(x))
+      case UserInfoClaim.Gender(x) => ("gender", Json.fromString(x))
+      case UserInfoClaim.Birthdate(x) => ("birthdate", Json.fromString(x))
+      case UserInfoClaim.Zoneinfo(x) => ("zoneinfo", Json.fromString(x))
+      case UserInfoClaim.Locale(x) => ("locale", Json.fromString(x))
+      case UserInfoClaim.PhoneNumber(x) => ("phone_number", Json.fromString(x))
+      case UserInfoClaim.UpdatedAt(x) => ("updated_at", Json.fromLong(x))
+      case UserInfoClaim.Address(x) => ("address", x)
+      case UserInfoClaim.EmailVerified(x) => ("email_verified", Json.fromBoolean(x))
+      case UserInfoClaim.PhoneNumberVerified(x) => ("phone_number_verified", Json.fromBoolean(x))
+      case UserInfoClaim.Custom(key, x) => (key, x)
+    }
+
+    Json.obj(xs1:_*)
+  }
+
 
   // client.fetchAs[UserInfo](fetchUserInfo(.., ..))
   def fetchUserInfo(endpointUri: Uri, accessToken: AccessToken): Request = {

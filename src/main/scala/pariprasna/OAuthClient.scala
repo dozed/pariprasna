@@ -3,6 +3,8 @@ package pariprasna
 import org.http4s._
 import org.http4s.client.Client
 
+import io.circe._
+
 import scalaz.concurrent._
 import scalaz._, Scalaz._
 
@@ -39,11 +41,12 @@ object OAuthClient {
     client.fetchAs[TokenResponse](Requests.exchangeCodeForAccessTokenRequest(endpoint, credentials, code, redirectUri))
   }
 
-  def fetchUserInfo(providerKey: String, accessToken: AccessToken) = req[UserInfoEndpoint.UserInfo] { client =>
-    val apiEndpointUri = UserInfoEndpoint.lookupUserInfoEndpoint(providerKey)
-    val reader = UserInfoEndpoint.lookupUserInfoDecoder(providerKey)
-    client.fetchAs[UserInfoEndpoint.UserInfo](UserInfoEndpoint.fetchUserInfo(apiEndpointUri, accessToken))(Util.circeDecoderAsEntityDecoder(reader))
-  }
+  def fetchUserInfo(providerKey: String, accessToken: AccessToken, claimDecoder: Decoder[List[UserInfoEndpoint.UserInfoClaim]] = UserInfoEndpoint.userInfoClaimDecoder) =
+    req[List[UserInfoEndpoint.UserInfoClaim]] { client =>
+      val apiEndpointUri = UserInfoEndpoint.lookupUserInfoEndpoint(providerKey)
+      val decoder = org.http4s.circe.jsonOf[List[UserInfoEndpoint.UserInfoClaim]](claimDecoder)
+      client.fetchAs[List[UserInfoEndpoint.UserInfoClaim]](UserInfoEndpoint.fetchUserInfo(apiEndpointUri, accessToken))(decoder)
+    }
 
 
   def readAuthorizationResponseUri(uri: Uri): Task[AuthorizationResponse] = {
