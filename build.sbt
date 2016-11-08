@@ -18,6 +18,8 @@ libraryDependencies ++= Seq(
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1")
 
+exportJars := true
+
 lazy val iaksmlka = ProjectRef(uri("https://github.com/dozed/iaksmlka.git"), "iaksmlka")
 
 lazy val pariprasna = project.in(file("."))
