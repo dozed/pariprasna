@@ -24,7 +24,7 @@ object UserInfoEndpoint {
 
   // Facebook: proprietary OAuth 2.0 authentication extension
   // https://developers.facebook.com/docs/graph-api/reference/user
-  val facebookUserInfoUri = Uri.uri("https://graph.facebook.com/v2.8/me?fields=id,email,name")
+  val facebookUserInfoUri = Uri.uri("https://graph.facebook.com/v2.8/me?fields=id,email,name,verified")
 
 
 
@@ -126,6 +126,8 @@ object UserInfoEndpoint {
 
   implicit val nonStandardUserInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
       Decoder.instance[List[UserInfoClaim]] { json =>
+
+        println(json.focus.spaces2)
 
         import cats.std.list._
         import cats.syntax.traverse._
