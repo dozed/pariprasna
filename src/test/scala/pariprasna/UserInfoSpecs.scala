@@ -75,6 +75,7 @@ class UserInfoSpecs extends Specification {
       |}
     """.stripMargin).require
 
+  implicit val userInfoClaimDecoder = nonStandardUserInfoClaimDecoder
 
   "UserInfo claims can be parsed from examples" in {
 

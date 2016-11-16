@@ -89,7 +89,7 @@ object UserInfoEndpoint {
 
   val strBooleanDecoder: Decoder[Boolean] = Decoder[String].map(str => if (str === "true") true else false)
 
-  implicit val userInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
+  val userInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
       Decoder.instance[List[UserInfoClaim]] { json =>
 
         import cats.std.list._
@@ -124,7 +124,7 @@ object UserInfoEndpoint {
       }
     }
 
-  implicit val nonStandardUserInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
+  val nonStandardUserInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
       Decoder.instance[List[UserInfoClaim]] { json =>
 
         println(json.focus.spaces2)
@@ -170,7 +170,7 @@ object UserInfoEndpoint {
       }
     }
 
-  implicit val userInfoClaimEncoder: Encoder[List[UserInfoClaim]] = Encoder.instance[List[UserInfoClaim]] { xs =>
+  val userInfoClaimEncoder: Encoder[List[UserInfoClaim]] = Encoder.instance[List[UserInfoClaim]] { xs =>
 
     val xs1: List[(String, Json)] = xs.map {
       case UserInfoClaim.Sub(x) => ("sub", Json.fromString(x))
