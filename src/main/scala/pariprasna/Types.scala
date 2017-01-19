@@ -158,10 +158,10 @@ object OAuthError {
 
     def facebookErrorJsonDecoder: Decoder[OAuthError.TokenResponseError] = Decoder.instance[OAuthError.TokenResponseError] { json =>
       for {
-        code <- json.downField("error").downField("code").as[String]
+        code <- json.downField("error").downField("code").as[Int]
         msg <- json.downField("error").downField("message").as[String]
       } yield {
-        OAuthError.TokenResponseError(code, msg)
+        OAuthError.TokenResponseError(code.toString, msg)
       }
     }
 
