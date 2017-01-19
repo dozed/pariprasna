@@ -107,21 +107,21 @@ object TokenResponse {
 
   implicit lazy val tokenResponseEntityDecoder: EntityDecoder[TokenResponse] =
     EntityDecoder.decodeBy(MediaRange.`*/*`) { msg =>
-      tokenResponseJsonEntityDecoder.decode(msg, false).orElse(tokenResponseFormEntityDecoder.decode(msg, false))
-    }
 
-  def tokenResponseJsonEntityDecoder: EntityDecoder[TokenResponse] = org.http4s.circe.json.flatMapR {
-    json =>
-      tokenResponseJsonDecoder.decodeJson(json).fold(
-        failure => {
-          json.as[OAuthError.TokenResponseError].fold(
-            _ => DecodeResult.failure(MalformedMessageBodyFailure("error decoding token response", Some(OAuthError.ParseError(failure.getMessage())))),
-            tokenResponseError => DecodeResult.failure(MalformedMessageBodyFailure("token response error", Some(tokenResponseError)))
-          )
-        },
-        token => DecodeResult.success(token)
+      val res = org.http4s.circe.json.decode(msg, false).run.flatMap(
+        _.fold(
+          _ => tokenResponseFormEntityDecoder.decode(msg, false).run,
+          json =>
+            tokenResponseJsonDecoder.decodeJson(json).fold(
+              failure => DecodeResult.failure(MalformedMessageBodyFailure(failure.getMessage())),
+              tokenResponse => DecodeResult.success(tokenResponse)
+            ).run
+        )
       )
-  }
+
+      DecodeResult(res)
+
+    }
 
   // facebook api returns response as application/x-www-form-urlencoded
   // access_token=...&expires=...
@@ -145,11 +145,17 @@ object OAuthError {
 
   case object AuthRequestCodeMissing extends OAuthError
 
-  case class TokenResponseError(code: String, msg: String) extends OAuthError
+  case class TokenResponseError(code: String, msg: String) extends OAuthError {
+    override def toString(): String = s"TokenResponseError($code, $msg)"
+  }
 
-  case class AuthorizationError(code: String, msg: Option[String]) extends OAuthError
+  case class AuthorizationError(code: String, msg: Option[String]) extends OAuthError {
+    override def toString(): String = s"AuthorizationError($code, $msg)"
+  }
 
-  case class ParseError(msg: String) extends OAuthError
+  case class ParseError(msg: String) extends OAuthError {
+    override def toString(): String = s"ParseError($msg)"
+  }
 
 
   object TokenResponseError {
