@@ -146,15 +146,15 @@ object OAuthError {
   case object AuthRequestCodeMissing extends OAuthError
 
   case class TokenResponseError(code: String, msg: String) extends OAuthError {
-    override def toString(): String = s"TokenResponseError($code, $msg)"
+    override def getMessage: String = s"TokenResponseError($code, $msg)"
   }
 
   case class AuthorizationError(code: String, msg: Option[String]) extends OAuthError {
-    override def toString(): String = s"AuthorizationError($code, $msg)"
+    override def getMessage: String = s"AuthorizationError($code, $msg)"
   }
 
   case class ParseError(msg: String) extends OAuthError {
-    override def toString(): String = s"ParseError($msg)"
+    override def getMessage: String = s"ParseError($msg)"
   }
 
 
