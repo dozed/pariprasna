@@ -8,14 +8,26 @@ import scalaz._, Scalaz._
 
 object Requests {
 
-  def authorizationRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String): Request = {
+  def authorizationUri(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String, display: LoginDisplay = LoginDisplay.Default): Uri = {
 
-    val uri = endpoint.authorizationUri
+    val displayOpt = display match {
+      case LoginDisplay.Popup => Some("popup")
+      case LoginDisplay.Default => None
+    }
+
+    endpoint.authorizationUri
       .withQueryParam(OAuthAttribute.ClientId.name, credentials.clientId)
       .withQueryParam(OAuthAttribute.RedirectUri.name, redirectUri.toString)
       .withQueryParam(OAuthAttribute.ResponseType.name, "code")
       .withQueryParam(OAuthAttribute.Scope.name, endpoint.scopes.mkString(" "))
       .withQueryParam(OAuthAttribute.State.name, state)
+      .withOptionQueryParam(OAuthAttribute.Display.name, displayOpt)
+
+  }
+
+  def authorizationRequest(endpoint: OAuthEndpoint, credentials: OAuthCredentials, redirectUri: Uri, state: String, display: LoginDisplay = LoginDisplay.Default): Request = {
+
+    val uri = authorizationUri(endpoint, credentials, redirectUri, state)
 
     Request(Method.GET, uri)
 

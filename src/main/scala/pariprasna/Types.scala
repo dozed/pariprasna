@@ -54,6 +54,17 @@ object OAuthAttribute {
   val Description = AttributeKey[String]("description")
   val ErrorDescription = AttributeKey[String]("error_description")
   val State = AttributeKey[String]("state")
+  val Display = AttributeKey[String]("display")
+
+}
+
+
+sealed trait LoginDisplay
+
+object LoginDisplay {
+
+  case object Popup extends LoginDisplay
+  case object Default extends LoginDisplay
 
 }
 
