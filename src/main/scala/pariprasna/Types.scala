@@ -119,7 +119,7 @@ object TokenResponse {
   implicit lazy val tokenResponseEntityDecoder: EntityDecoder[TokenResponse] =
     EntityDecoder.decodeBy(MediaRange.`*/*`) { msg =>
 
-      val res = org.http4s.circe.json.decode(msg, false).run.flatMap(
+      val res = org.http4s.circe.jsonDecoder.decode(msg, false).run.flatMap(
         _.fold(
           _ => tokenResponseFormEntityDecoder.decode(msg, false).run,
           json =>
