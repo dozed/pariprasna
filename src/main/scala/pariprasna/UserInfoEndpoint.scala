@@ -127,8 +127,6 @@ object UserInfoEndpoint {
   val nonStandardUserInfoClaimDecoder: Decoder[List[UserInfoClaim]] = Decoder[JsonObject].flatMap { obj =>
       Decoder.instance[List[UserInfoClaim]] { json =>
 
-        println(json.focus.spaces2)
-
         import cats.std.list._
         import cats.syntax.traverse._
 
